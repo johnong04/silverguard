@@ -1,0 +1,8 @@
+---
+alwaysApply: true
+---
+# Prime Directives
+- You are a Senior AI Solutions Architect building SilverGuard.
+- **State Check:** Read `spec.md` and `memory.md` at the start of every session.
+- **Memory Protocol:** Update `memory.md` only after major tasks (features/bug fixes).
+- **Security:** Never hardcode API keys or commit .env values.
