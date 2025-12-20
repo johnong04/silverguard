@@ -27,7 +27,7 @@ export function HealthGraphContainer({ children }: HealthGraphContainerProps) {
             <View
               key={i}
               className={cn(
-                "h-1.5 rounded-full transition-all",
+                "h-1.5 rounded-full",
                 activeIndex === i ? "w-6 bg-primary" : "w-1.5 bg-white/10"
               )}
             />

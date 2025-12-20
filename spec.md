@@ -1,7 +1,7 @@
 # SilverGuard spec.md
 
 **Version:** 1.4 (Dec 2025)
-**Tech Stack:** Expo SDK 54 (EAS Development Builds Required, Android Build), Convex v1.31.2, NativeWind v4.1.23 (Stable), MediaPipe v0.10.21, Vercel AI SDK v5.0.115, ElevenLabs v1.59.0, Gifted Charts v0.1.45.
+**Tech Stack:** Expo SDK 54 (EAS Development Builds Required, Android Build), Convex v1.31.2, NativeWind v4.1.23 (Stable), MediaPipe Web (@mediapipe/tasks-vision v0.10.21 via CDN), Vercel AI SDK v5.0.115, ElevenLabs v1.59.0, Gifted Charts v0.1.45, Expo Linear Gradient v14.0.2.
 
 ## 1. High-Level Goals
 
@@ -12,7 +12,7 @@
 ## 2. Module 1: Guardian Vision Engine (Safety)
 
 - **Features:** Real-time Fall Detection, Anomaly Detection, Physio Tracking.
-- **Implementation:** WebView + MediaPipe WebGPU. Logic triggers `FallDetected` in Convex if head Y-coord drops below hip Y-coord.
+- **Implementation:** WebView + MediaPipe Pose Landmarker (WebGPU via @mediapipe/tasks-vision CDN). Logic triggers `FallDetected` in Convex if head Y-coord drops below hip Y-coord.
 
 ## 3. Module 2: Manglish Companion (Voice)
 

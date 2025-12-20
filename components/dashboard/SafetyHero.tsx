@@ -53,23 +53,39 @@ export function SafetyHero({ status, userName }: SafetyHeroProps) {
     ? "bg-destructive/10 border-destructive/20" 
     : "bg-primary/10 border-primary/20";
 
-  const pulseColor = isSafe 
-    ? "bg-safe" 
+  const pulseColorValue = isSafe 
+    ? "#10B981" 
     : isFall 
-    ? "bg-destructive" 
-    : "bg-primary";
+    ? "#DC2626" 
+    : "#F59E0B";
 
   return (
     <View className="items-center justify-center py-10">
       <View className="relative h-64 w-64 items-center justify-center">
-        {/* Animated Pulse Rings */}
+        {/* Animated Pulse Rings - Using inline styles for Reanimated compatibility */}
         <Animated.View 
-          style={animatedRingStyle}
-          className={cn("absolute h-full w-full rounded-full", pulseColor)}
+          style={[
+            animatedRingStyle, 
+            { 
+              position: 'absolute', 
+              height: '100%', 
+              width: '100%', 
+              borderRadius: 9999, 
+              backgroundColor: pulseColorValue 
+            }
+          ]}
         />
         <Animated.View 
-          style={[animatedRingStyle, { width: '110%', height: '110%' }]}
-          className={cn("absolute rounded-full", pulseColor)}
+          style={[
+            animatedRingStyle, 
+            { 
+              position: 'absolute',
+              width: '110%', 
+              height: '110%', 
+              borderRadius: 9999, 
+              backgroundColor: pulseColorValue 
+            }
+          ]}
         />
 
         {/* Main Circle */}
@@ -92,7 +108,7 @@ export function SafetyHero({ status, userName }: SafetyHeroProps) {
               {isSafe ? "Safe" : isFall ? "Alert" : "Away"}
             </Text>
             <View className="mt-1 flex-row items-center space-x-1">
-              <View className={cn("h-2 w-2 rounded-full", isSafe ? "bg-safe" : isFall ? "bg-destructive animate-pulse" : "bg-primary")} />
+              <View className={cn("h-2 w-2 rounded-full", isSafe ? "bg-safe" : isFall ? "bg-destructive" : "bg-primary")} />
               <Text className="text-xs font-medium uppercase tracking-widest text-stone-500">
                 {isSafe ? "Active" : isFall ? "Emergency" : "Monitoring"}
               </Text>

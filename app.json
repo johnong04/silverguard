@@ -13,7 +13,10 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "SilverGuard needs camera access to detect falls and ensure your safety."
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -22,7 +25,10 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.johnong04.SilverGuard"
+      "package": "com.johnong04.SilverGuard",
+      "permissions": [
+        "CAMERA"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -33,7 +39,13 @@
       }
     },
     "plugins": [
-      "expo-font"
+      "expo-font",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow SilverGuard to access your camera for fall detection and safety monitoring."
+        }
+      ]
     ]
   }
 }

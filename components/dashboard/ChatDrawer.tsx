@@ -206,7 +206,7 @@ export function ChatDrawer({ visible, onClose }: ChatDrawerProps) {
 
           {isThinking && (
             <View className="self-start max-w-[85%] rounded-2xl rounded-tl-none bg-zinc-900 px-5 py-4 border border-white/10 flex-row items-center space-x-3 mb-4">
-              <Loader2 size={16} color="#F59E0B" className="animate-spin" />
+              <Loader2 size={16} color="#F59E0B" />
               <Text className="text-stone-400 font-sans text-sm italic">
                 Auntie check in progress...
               </Text>
@@ -233,10 +233,10 @@ export function ChatDrawer({ visible, onClose }: ChatDrawerProps) {
               onPress={handleSend}
               disabled={!inputText.trim() || isThinking}
               className={cn(
-                "h-10 w-10 items-center justify-center rounded-full transition-all",
+                "h-10 w-10 items-center justify-center rounded-full",
                 inputText.trim()
-                  ? "bg-primary scale-100"
-                  : "bg-zinc-800 scale-90"
+                  ? "bg-primary"
+                  : "bg-zinc-800"
               )}
             >
               <Send

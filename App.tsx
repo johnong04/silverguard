@@ -23,7 +23,7 @@ import {
   ShieldAlert,
   Sparkles,
   Activity,
-  Heart,
+  Eye,
   Video,
   User,
   Siren,
@@ -52,6 +52,9 @@ import { HealthGraphContainer } from "./components/dashboard/graphs/HealthGraphC
 import { PillAdherenceGraph } from "./components/dashboard/graphs/PillAdherenceGraph";
 import { ActivityTimeGraph } from "./components/dashboard/graphs/ActivityTimeGraph";
 
+// Vision Engine
+import { VisionEngine } from "./components/vision/VisionEngine";
+
 // Prevent splash screen from auto-hiding
 SplashScreen.preventAutoHideAsync();
 
@@ -60,7 +63,11 @@ const convex = new ConvexReactClient(process.env.EXPO_PUBLIC_CONVEX_URL!, {
   unsavedChangesWarning: false,
 });
 
-function Dashboard() {
+interface DashboardProps {
+  onOpenVision: () => void;
+}
+
+function Dashboard({ onOpenVision }: DashboardProps) {
   const [emergencyMenuOpen, setEmergencyMenuOpen] = React.useState(false);
   const [chatVisible, setChatVisible] = React.useState(false);
 
@@ -224,17 +231,22 @@ function Dashboard() {
             <ActivityTimeGraph />
           </HealthGraphContainer>
 
-          {/* Custom Action Button */}
+          {/* Vision Engine Button - Opens Fall Detection */}
           <Button
-            className="mt-4 h-16 w-full rounded-3xl bg-secondary border border-white/5 flex-row items-center justify-center"
-            onPress={() => user && triggerWelfare({ userId: user._id })}
+            className="mt-4 h-16 w-full rounded-3xl bg-safe/10 border border-safe/30 flex-row items-center justify-center"
+            onPress={onOpenVision}
           >
-            <View className="mr-3">
-              <Heart size={22} color="#F59E0B" />
+            <View className="mr-3 h-10 w-10 items-center justify-center rounded-full bg-safe/20">
+              <Eye size={22} color="#10B981" />
             </View>
-            <Text className="font-sans font-bold text-stone-200">
-              Trigger Welfare Check
-            </Text>
+            <View>
+              <Text className="font-sans font-bold text-safe">
+                Open Vision Engine
+              </Text>
+              <Text className="font-sans text-xs text-stone-500">
+                Fall Detection & Monitoring
+              </Text>
+            </View>
           </Button>
         </View>
       </ScrollView>
@@ -251,6 +263,24 @@ function Dashboard() {
       <ChatDrawer visible={chatVisible} onClose={() => setChatVisible(false)} />
     </SafeAreaView>
   );
+}
+
+function AppContent() {
+  const [showVisionEngine, setShowVisionEngine] = React.useState(false);
+
+  const guardianId = "demo-guardian-id";
+  const user = useQuery(api.users.getByGuardian, { guardianId });
+
+  if (showVisionEngine && user) {
+    return (
+      <VisionEngine
+        onClose={() => setShowVisionEngine(false)}
+        userId={user._id}
+      />
+    );
+  }
+
+  return <Dashboard onOpenVision={() => setShowVisionEngine(true)} />;
 }
 
 export default function App() {
@@ -274,7 +304,7 @@ export default function App() {
   return (
     <ConvexProvider client={convex}>
       <SafeAreaProvider>
-        <Dashboard />
+        <AppContent />
       </SafeAreaProvider>
     </ConvexProvider>
   );
