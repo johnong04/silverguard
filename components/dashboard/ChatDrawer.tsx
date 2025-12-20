@@ -12,6 +12,8 @@ import {
 import { Send, Sparkles, Mic, Loader2 } from "lucide-react-native";
 import { Drawer } from "../ui/drawer";
 import { cn } from "../../lib/utils";
+import { useAction, useQuery } from "convex/react";
+import { api } from "../../convex/_generated/api";
 
 // Enable LayoutAnimation for Android
 if (
@@ -33,12 +35,6 @@ interface ChatDrawerProps {
   onClose: () => void;
 }
 
-const AI_MSG_1 =
-  "Hello Guardian! I've analyzed Auntie Rose's health status for this week. She's been very consistent with her medications and completed 5 out of 7 scheduled physio walks. Her overall mobility is improving!";
-
-const AI_MSG_2 =
-  "\"Auntie, okay tak? Dah makan ubat ke?\"\n\nI just checked in with her. She's doing great and confirmed she hasn't missed a single dose of her Aspirin this week. Everything is steady lah!";
-
 export function ChatDrawer({ visible, onClose }: ChatDrawerProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState("");
@@ -46,6 +42,11 @@ export function ChatDrawer({ visible, onClose }: ChatDrawerProps) {
   const [hasFiredInitial, setHasFiredInitial] = useState(false);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
   const scrollViewRef = useRef<ScrollView>(null);
+
+  // Convex hooks
+  const chatAction = useAction(api.actions.chat);
+  const guardianId = "demo-guardian-id";
+  const user = useQuery(api.users.getByGuardian, { guardianId });
 
   // Robust scroll to bottom
   const scrollToBottom = useCallback(() => {
@@ -59,27 +60,39 @@ export function ChatDrawer({ visible, onClose }: ChatDrawerProps) {
     setTimeout(scroll, 150);
   }, []);
 
-  // Initial Message Trigger
+  // Initial Message Trigger (Real AI Intro)
   useEffect(() => {
-    if (visible && !hasFiredInitial) {
-      setIsThinking(true);
-      const timer = setTimeout(() => {
-        const initialMsg: Message = {
-          id: "initial",
-          text: AI_MSG_1,
-          sender: "ai",
-          timestamp: new Date().toLocaleTimeString([], {
-            hour: "2-digit",
-            minute: "2-digit",
-          }),
-        };
-        setIsThinking(false);
-        setMessages([initialMsg]);
-        setHasFiredInitial(true);
-      }, 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [visible, hasFiredInitial]);
+    const fireIntro = async () => {
+      if (visible && !hasFiredInitial && user) {
+        setIsThinking(true);
+        try {
+          const response = await chatAction({
+            userId: user._id,
+            prompt: "Give me a quick update and introduce yourself.",
+            history: [],
+          });
+
+          const introMsg: Message = {
+            id: "initial",
+            text: response,
+            sender: "ai",
+            timestamp: new Date().toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
+          };
+          setMessages([introMsg]);
+          setHasFiredInitial(true);
+        } catch (error) {
+          console.error("Intro Error:", error);
+        } finally {
+          setIsThinking(false);
+        }
+      }
+    };
+
+    fireIntro();
+  }, [visible, hasFiredInitial, user, chatAction]);
 
   // Keyboard listener
   useEffect(() => {
@@ -108,12 +121,13 @@ export function ChatDrawer({ visible, onClose }: ChatDrawerProps) {
     scrollToBottom();
   }, [messages, isThinking, scrollToBottom]);
 
-  const handleSend = () => {
-    if (!inputText.trim()) return;
+  const handleSend = async () => {
+    if (!inputText.trim() || !user) return;
 
+    const userMessageText = inputText.trim();
     const userMessage: Message = {
       id: Date.now().toString(),
-      text: inputText.trim(),
+      text: userMessageText,
       sender: "user",
       timestamp: new Date().toLocaleTimeString([], {
         hour: "2-digit",
@@ -125,11 +139,23 @@ export function ChatDrawer({ visible, onClose }: ChatDrawerProps) {
     setInputText("");
     setIsThinking(true);
 
-    // Mock AI response
-    setTimeout(() => {
+    try {
+      // Convert messages to history for the AI
+      const history = messages.map((m) => ({
+        role: m.sender === "user" ? "user" : "assistant",
+        content: m.text,
+      }));
+
+      // Call live Convex action
+      const response = await chatAction({
+        userId: user._id,
+        prompt: userMessageText,
+        history,
+      });
+
       const aiResponse: Message = {
         id: (Date.now() + 1).toString(),
-        text: AI_MSG_2,
+        text: response,
         sender: "ai",
         timestamp: new Date().toLocaleTimeString([], {
           hour: "2-digit",
@@ -139,7 +165,18 @@ export function ChatDrawer({ visible, onClose }: ChatDrawerProps) {
 
       setIsThinking(false);
       setMessages((prev) => [...prev, aiResponse]);
-    }, 2000);
+    } catch (error) {
+      console.error("Chat Error:", error);
+      setIsThinking(false);
+      
+      const errorMsg: Message = {
+        id: "error-" + Date.now(),
+        text: "Auntie Rose not responding lah. Line slow? Try again can?",
+        sender: "ai",
+        timestamp: new Date().toLocaleTimeString(),
+      };
+      setMessages((prev) => [...prev, errorMsg]);
+    }
   };
 
   return (

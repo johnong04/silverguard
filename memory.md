@@ -1,11 +1,21 @@
 # 🧠 Project Memory: SilverGuard
 
-## 📅 Last Updated: Dec 20, 2025
+## 📅 Last Updated: Dec 21, 2025
 
 ## 🎯 Executive Summary
 
 - **Current Goal:** Build a "High-Wow" demo for the UM Startup Investor Challenge.
 - **Strategy:** Prioritize the "Happy Path" loop: **Vision Detection** → **Immediate Voice Response** → **Real-time Dashboard Update**.
+
+## 🕒 Session Log: Dec 21, 2025
+
+- [x] **Vision Engine (Module 1) Complete:**
+  - Implemented MediaPipe Pose Landmarker via WebView with jade-green skeletal overlay.
+  - Developed fall detection algorithm (nose-below-ankles + velocity check).
+  - Built luxury overlay UI with Status Header, Transcription box, and Emergency button.
+- [x] **Android Camera Fix:** Overcame `getUserMedia` limitations in Android WebView by hosting HTML on Vercel (HTTPS).
+- [x] **Animation Stability:** Fixed fatal Reanimated crash by converting Tailwind animations to direct Reanimated styles in `VisionEngine.tsx`.
+- [x] **Developer Workflow:** Implemented "Simulation Trigger" on the Emergency button to allow instant testing of the fall response loop.
 
 ## 🕒 Session Log: Dec 20, 2025
 
@@ -42,7 +52,7 @@
 
 - [x] Install native dependencies: `expo-camera`, `react-native-webview` (installed via `npx expo install`).
 - [x] Fixed "Gradient package not found" error: Installed `expo-linear-gradient` (required by `react-native-gifted-charts`).
-- [ ] Trigger fresh EAS build to support new native modules.
+- [x] Trigger fresh EAS build to support new native modules.
 - [x] Implement MediaPipe WebView for on-device Pose Estimation.
 - [x] **Decision:** Use WebGPU version in WebView for maximum velocity/privacy.
 - [x] Connect CV "Fall" trigger to a Convex mutation.
@@ -55,8 +65,18 @@
 
 ### Phase 4: The "Brain" & Persistence (Hours 18-30)
 
-- [ ] Integrate Vercel AI SDK to add "Memory" to the companion.
-- [ ] **High Priority:** Integrate YTL ILMU Chat Drawer on Dashboard.
+- [x] **YTL ILMU Integration:**
+  - Implemented `chat` Convex Action for live health insights.
+  - Connected to `pre-maluri-chat` model via OpenAI-compatible endpoint.
+  - Added dynamic context fetching (Meds, Safety Status, Recent Events).
+  - Implemented Manglish-speaking AI Caregiver personality (SilverGuard).
+- [x] **Contextual UI & Closed-Loop Resolution:**
+  - Replaced mock chat logic in `ChatDrawer.tsx` with live backend integration.
+  - Added thinking indicators and error handling for better UX.
+  - **Closed-Loop Demo Flow:** Implemented persistent "Auntie Okay Dah" button in `VisionEngine.tsx` that stays in sync with Convex status.
+  - **Resolution Logging:** Added a `resolved` event type to provide the AI with a clear history of crisis resolution.
+  - **AI Temporal Intelligence:** Updated `actions.ts` to include current server time and formatted dates in logs, enabling the AI to reason about how recently events occurred.
+- [ ] **High Priority:** Integrate YTL ILMU Chat Drawer on Dashboard. (Completed: integrated into current drawer)
 - [ ] Add `onFinish` callback to save chat history to Convex.
 - [ ] Implement Tool Calling: Allow the Agent to check the Convex events table.
 
@@ -67,3 +87,5 @@
 - [!] **Layout Stability:** Anchored Input Area OUTSIDE the message `ScrollView` to prevent growing chat history from pushing the input field off-screen during autoscrolls.
 - [!] **UX Micro-interactions:** Use staggered `scrollToEnd` (immediate + 100ms delay) to ensure scrolls occur AFTER layout transitions finish.
 - [!] **Android WebView Camera Limitation:** `navigator.mediaDevices.getUserMedia` is undefined for local HTML in Android WebView because it's not treated as a secure (HTTPS) context. **Solution:** Hosted the MediaPipe HTML on Vercel at `https://umsic-blond.vercel.app/mediapipe-pose.html`. The app now uses this URL for Android Vision Engine.
+- [!] **Simulation Workflow:** Added a shared `triggerFallResponse` function in `VisionEngine.tsx`. Both the MediaPipe "Fall Detected" message and the "Emergency Alert" button use this function, allowing for instant testing of the response UI without needing a physical fall simulation.
+- [!] **Animation Stability:** When using NativeWind v4 animations (`animate-strobe`) on Android, always use `Animated.View` and preferably direct Reanimated styles (`useAnimatedStyle`) to avoid interop crashes where styles are passed to standard components.

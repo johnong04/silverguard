@@ -19,15 +19,15 @@ export function PillAdherenceGraph({ meds = [] }: PillAdherenceGraphProps) {
   ];
 
   return (
-    <View className="flex-row items-center justify-between">
-      <View className="flex-1 pr-4">
+    <View className="flex-row items-center justify-between flex-1">
+      <View className="flex-1 pr-4 justify-center">
         <Text className="font-serif text-xl text-white">Daily Adherence</Text>
-        <Text className="mt-1 font-sans text-stone-400">
+        <Text className="mt-1 font-sans text-stone-400 text-sm">
           {takenCount} of {total} medications taken today.
         </Text>
         <View className="mt-4 flex-row items-center space-x-2">
           <View className="h-2 w-2 rounded-full bg-safe" />
-          <Text className="font-sans text-xs uppercase tracking-widest text-stone-500">
+          <Text className="font-sans text-[10px] uppercase tracking-widest text-stone-500">
             Current Streak: 5 Days
           </Text>
         </View>
@@ -36,8 +36,8 @@ export function PillAdherenceGraph({ meds = [] }: PillAdherenceGraphProps) {
       <View className="items-center justify-center">
         <PieChart
           donut
-          radius={50}
-          innerRadius={38}
+          radius={45}
+          innerRadius={34}
           data={data}
           centerLabelComponent={() => (
             <View className="items-center justify-center">

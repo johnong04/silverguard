@@ -7,8 +7,16 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { WebView, WebViewMessageEvent } from "react-native-webview";
-import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
-import { useMutation } from "convex/react";
+import Animated, {
+  FadeIn,
+  FadeOut,
+  useSharedValue,
+  useAnimatedStyle,
+  withRepeat,
+  withSequence,
+  withTiming,
+} from "react-native-reanimated";
+import { useMutation, useQuery } from "convex/react";
 import { Camera } from "expo-camera";
 import { api } from "../../convex/_generated/api";
 import { Id } from "../../convex/_generated/dataModel";
@@ -37,7 +45,6 @@ interface WebViewMessage {
 export function VisionEngine({ onClose, userId }: VisionEngineProps) {
   const webViewRef = useRef<WebView>(null);
   const [isReady, setIsReady] = useState(false);
-  const [fallDetected, setFallDetected] = useState(false);
   const [transcription, setTranscription] = useState("");
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [cameraPermission, setCameraPermission] = useState<boolean | null>(
@@ -45,8 +52,57 @@ export function VisionEngine({ onClose, userId }: VisionEngineProps) {
   );
   const [permissionError, setPermissionError] = useState<string | null>(null);
 
-  // Convex mutation for logging falls
+  // Convex hooks
+  const user = useQuery(api.users.getById, { userId });
   const logFall = useMutation(api.events.logFall);
+  const logResolution = useMutation(api.events.logResolution);
+
+  const isFallActive = user?.status === "fall_detected";
+
+  // Strobe animation for fall detection
+  const strobeOpacity = useSharedValue(1);
+
+  const triggerFallResponse = useCallback(
+    async (source: "vision_engine" | "manual_simulation", details: any = {}) => {
+      // Logic for resolving a fall if one is active in DB
+      if (isFallActive) {
+        strobeOpacity.value = 1;
+        setIsSpeaking(false);
+        setTranscription("");
+        
+        // Reset status and log resolution in Convex
+        await logResolution({ userId });
+        return;
+      }
+
+      // Start strobe animation
+      strobeOpacity.value = withRepeat(
+        withSequence(
+          withTiming(0.3, { duration: 400 }),
+          withTiming(1, { duration: 400 })
+        ),
+        -1,
+        true
+      );
+
+      // Log to Convex
+      await logFall({
+        userId,
+        metadata: {
+          source,
+          ...details,
+          timestamp: Date.now(),
+        },
+      });
+
+      // Show transcription (simulating voice response)
+      setTranscription(
+        "Auntie, okay tak? I detected a fall. Help is on the way!"
+      );
+      setIsSpeaking(true);
+    },
+    [isFallActive, logFall, logResolution, strobeOpacity, userId]
+  );
 
   // Request camera permission before loading WebView
   useEffect(() => {
@@ -77,33 +133,10 @@ export function VisionEngine({ onClose, userId }: VisionEngineProps) {
             break;
 
           case "FALL_DETECTED":
-            if (!fallDetected) {
-              setFallDetected(true);
-
-              // Log fall to Convex
-              await logFall({
-                userId,
-                metadata: {
-                  source: "vision_engine",
-                  reason: data.reason,
-                  confidence: data.confidence,
-                  timestamp: data.timestamp,
-                },
-              });
-
-              // Show transcription (simulating voice response)
-              setTranscription(
-                "Auntie, okay tak? I detected a fall. Help is on the way!"
-              );
-              setIsSpeaking(true);
-
-              // Reset after cooldown
-              setTimeout(() => {
-                setFallDetected(false);
-                setIsSpeaking(false);
-                setTranscription("");
-              }, 5000);
-            }
+            await triggerFallResponse("vision_engine", {
+              reason: data.reason,
+              confidence: data.confidence,
+            });
             break;
 
           case "ERROR":
@@ -114,30 +147,17 @@ export function VisionEngine({ onClose, userId }: VisionEngineProps) {
         console.error("Failed to parse WebView message:", err);
       }
     },
-    [fallDetected, logFall, userId]
+    [triggerFallResponse]
   );
 
   const handleEmergencyPress = useCallback(async () => {
-    // Log manual emergency trigger
-    await logFall({
-      userId,
-      metadata: {
-        source: "manual_emergency",
-        timestamp: Date.now(),
-      },
-    });
+    // Now triggers the full simulation for easy testing
+    await triggerFallResponse("manual_simulation");
+  }, [triggerFallResponse]);
 
-    // Show emergency response
-    setTranscription(
-      "Kecemasan dihantar! Emergency services have been notified."
-    );
-    setIsSpeaking(true);
-
-    setTimeout(() => {
-      setIsSpeaking(false);
-      setTranscription("");
-    }, 5000);
-  }, [logFall, userId]);
+  const strobeStyle = useAnimatedStyle(() => ({
+    opacity: strobeOpacity.value,
+  }));
 
   // Show loading state while checking permissions
   if (cameraPermission === null) {
@@ -227,18 +247,21 @@ export function VisionEngine({ onClose, userId }: VisionEngineProps) {
       />
 
       {/* Fall Alert Indicator */}
-      {fallDetected && (
+      {isFallActive && (
         <Animated.View
           entering={FadeIn.duration(200)}
           exiting={FadeOut.duration(200)}
-          style={styles.fallAlert}
+          style={[styles.fallAlert, strobeStyle]}
         >
-          <View className="absolute inset-0 bg-destructive/20 border-4 border-destructive animate-strobe" />
+          <View className="absolute inset-0 bg-destructive/20 border-4 border-destructive" />
         </Animated.View>
       )}
 
       {/* Emergency Button */}
-      <EmergencyButton onPress={handleEmergencyPress} disabled={fallDetected} />
+      <EmergencyButton 
+        onPress={handleEmergencyPress} 
+        isOkayMode={isFallActive} 
+      />
     </Animated.View>
   );
 }

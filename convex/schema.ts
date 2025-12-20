@@ -17,7 +17,8 @@ export default defineSchema({
     type: v.union(
       v.literal("fall"),
       v.literal("meds"),
-      v.literal("welfare")
+      v.literal("welfare"),
+      v.literal("resolved")
     ),
     timestamp: v.number(),
     userId: v.id("users"),

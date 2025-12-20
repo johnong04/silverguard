@@ -37,19 +37,19 @@ export function HealthGraphContainer({ children }: HealthGraphContainerProps) {
 
       <ScrollView
         horizontal
-        pagingEnabled
         showsHorizontalScrollIndicator={false}
         onScroll={handleScroll}
         scrollEventThrottle={16}
         snapToInterval={CARD_WIDTH + 16}
+        snapToAlignment="center"
         decelerationRate="fast"
-        contentContainerStyle={{ paddingHorizontal: 24 }}
+        contentContainerStyle={{ paddingHorizontal: 24, alignItems: "center" }}
       >
         {children.map((child, index) => (
           <View
             key={index}
-            style={{ width: CARD_WIDTH }}
-            className="mr-4 overflow-hidden rounded-[32px] border border-white/5 bg-zinc-900/40 p-6"
+            style={{ width: CARD_WIDTH, height: 240 }}
+            className="mr-4 overflow-hidden rounded-[32px] border border-white/5 bg-zinc-900/40 p-6 justify-center"
           >
             {child}
           </View>
@@ -58,4 +58,3 @@ export function HealthGraphContainer({ children }: HealthGraphContainerProps) {
     </View>
   );
 }
-

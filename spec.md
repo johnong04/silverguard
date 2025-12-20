@@ -35,7 +35,9 @@
 - [x] Initialize project with Expo SDK 54 and EAS Development Builds.
 - [x] Set up NativeWind v4 and Native-CN foundation.
 - [x] Initialize Convex backend and seed demo data.
+- [x] **Module 1 Complete:** Vision Engine with MediaPipe fall detection and luxury UI overlay.
 - [ ] Set up .mdc rules for Native-CN and Vercel AI SDK.
+- [ ] **Phase 3 Start:** ElevenLabs voice integration for welfare checks.
 
 ## 7. UI Architecture (Luxury Aesthetic)
 
