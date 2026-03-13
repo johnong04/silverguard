@@ -44,7 +44,7 @@ export function CrisisModal({ visible, onClose, userName }: CrisisModalProps) {
         {/* Secondary Actions */}
         <View className="mt-6 w-full space-y-4">
           <Pressable 
-            className="flex-row items-center justify-between rounded-2xl border border-white/5 bg-white/5 p-4 active:bg-white/10"
+            className="flex-row items-center justify-between rounded-2xl border border-white/5 bg-white/5 p-4"
           >
             <View className="flex-row items-center space-x-3">
               <View className="h-10 w-10 items-center justify-center rounded-full bg-primary/10">
@@ -56,7 +56,7 @@ export function CrisisModal({ visible, onClose, userName }: CrisisModalProps) {
           </Pressable>
 
           <Pressable 
-            className="flex-row items-center justify-between rounded-2xl border border-white/5 bg-white/5 p-4 active:bg-white/10"
+            className="flex-row items-center justify-between rounded-2xl border border-white/5 bg-white/5 p-4"
           >
             <View className="flex-row items-center space-x-3">
               <View className="h-10 w-10 items-center justify-center rounded-full bg-blue-500/10">

@@ -28,7 +28,7 @@ export function MedicationCard({ name, time, taken, overdue, onToggle }: Medicat
     <Pressable 
       onPress={onToggle}
       className={cn(
-        "mb-4 flex-row items-center rounded-3xl border border-white/5 bg-zinc-900/40 p-5 shadow-sm active:scale-[0.98]",
+        "mb-4 flex-row items-center rounded-3xl border border-white/5 bg-zinc-900/40 p-5 shadow-sm",
         taken && "opacity-60"
       )}
     >

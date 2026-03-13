@@ -50,7 +50,7 @@ export function Drawer({ visible, onClose, title, children, className }: DrawerP
             <Text className="text-2xl font-serif text-white">{title}</Text>
             <Pressable 
               onPress={onClose}
-              className="h-10 w-10 items-center justify-center rounded-full bg-white/5 active:bg-white/10"
+              className="h-10 w-10 items-center justify-center rounded-full bg-white/5"
             >
               <ChevronDown size={24} color="white" />
             </Pressable>

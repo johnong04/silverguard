@@ -92,7 +92,7 @@ export function SafetyHero({ status, userName }: SafetyHeroProps) {
               {isSafe ? "Safe" : isFall ? "Alert" : "Away"}
             </Text>
             <View className="mt-1 flex-row items-center space-x-1">
-              <View className={cn("h-2 w-2 rounded-full", isSafe ? "bg-safe" : isFall ? "bg-destructive animate-pulse" : "bg-primary")} />
+              <View className={cn("h-2 w-2 rounded-full", isSafe ? "bg-safe" : isFall ? "bg-destructive" : "bg-primary")} />
               <Text className="text-xs font-medium uppercase tracking-widest text-stone-500">
                 {isSafe ? "Active" : isFall ? "Emergency" : "Monitoring"}
               </Text>

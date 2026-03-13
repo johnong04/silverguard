@@ -45,7 +45,7 @@ import { FAB } from "./components/ui/fab";
 // Feature Components
 import { SafetyHero } from "./components/dashboard/SafetyHero";
 import { MedicationCard } from "./components/dashboard/MedicationCard";
-import { ChatDrawer } from "./components/dashboard/ChatDrawer";
+import { ChatDrawer, Message } from "./components/dashboard/ChatDrawer";
 
 // Graph Components
 import { HealthGraphContainer } from "./components/dashboard/graphs/HealthGraphContainer";
@@ -65,11 +65,11 @@ const convex = new ConvexReactClient(process.env.EXPO_PUBLIC_CONVEX_URL!, {
 
 interface DashboardProps {
   onOpenVision: () => void;
+  onOpenChat: () => void;
 }
 
-function Dashboard({ onOpenVision }: DashboardProps) {
+function Dashboard({ onOpenVision, onOpenChat }: DashboardProps) {
   const [emergencyMenuOpen, setEmergencyMenuOpen] = React.useState(false);
-  const [chatVisible, setChatVisible] = React.useState(false);
 
   const guardianId = "demo-guardian-id"; // Hardcoded for demo
   const user = useQuery(api.users.getByGuardian, { guardianId });
@@ -137,7 +137,7 @@ function Dashboard({ onOpenVision }: DashboardProps) {
             {emergencyMenuOpen && (
               <View className="absolute top-12 right-0 w-64 bg-zinc-900 border border-white/10 rounded-2xl p-2 shadow-2xl z-[100]">
                 <Pressable
-                  className="flex-row items-center p-3 rounded-xl active:bg-white/5"
+                  className="flex-row items-center p-3 rounded-xl"
                   onPress={() => {
                     console.log("Live Call");
                     setEmergencyMenuOpen(false);
@@ -152,7 +152,7 @@ function Dashboard({ onOpenVision }: DashboardProps) {
                 </Pressable>
 
                 <Pressable
-                  className="flex-row items-center p-3 rounded-xl active:bg-white/5"
+                  className="flex-row items-center p-3 rounded-xl"
                   onPress={() => {
                     console.log("Guardian Call");
                     setEmergencyMenuOpen(false);
@@ -167,7 +167,7 @@ function Dashboard({ onOpenVision }: DashboardProps) {
                 </Pressable>
 
                 <Pressable
-                  className="flex-row items-center p-3 rounded-xl active:bg-white/5"
+                  className="flex-row items-center p-3 rounded-xl"
                   onPress={() => {
                     console.log("Services Call");
                     setEmergencyMenuOpen(false);
@@ -253,34 +253,49 @@ function Dashboard({ onOpenVision }: DashboardProps) {
 
       {/* AI Insights FAB */}
       <FAB
-        onPress={() => setChatVisible(true)}
+        onPress={onOpenChat}
         className="bottom-10 right-8 h-20 w-20 bg-primary shadow-2xl shadow-primary/40"
       >
         <Sparkles size={32} color="#09090B" />
       </FAB>
-
-      {/* Modals & Drawers */}
-      <ChatDrawer visible={chatVisible} onClose={() => setChatVisible(false)} />
     </SafeAreaView>
   );
 }
 
 function AppContent() {
   const [showVisionEngine, setShowVisionEngine] = React.useState(false);
+  const [chatVisible, setChatVisible] = React.useState(false);
+  const [messages, setMessages] = React.useState<Message[]>([]);
+  const [hasFiredInitial, setHasFiredInitial] = React.useState(false);
 
   const guardianId = "demo-guardian-id";
   const user = useQuery(api.users.getByGuardian, { guardianId });
 
-  if (showVisionEngine && user) {
-    return (
-      <VisionEngine
-        onClose={() => setShowVisionEngine(false)}
-        userId={user._id}
-      />
-    );
-  }
+  return (
+    <View className="flex-1">
+      {showVisionEngine && user ? (
+        <VisionEngine
+          onClose={() => setShowVisionEngine(false)}
+          userId={user._id}
+        />
+      ) : (
+        <Dashboard
+          onOpenVision={() => setShowVisionEngine(true)}
+          onOpenChat={() => setChatVisible(true)}
+        />
+      )}
 
-  return <Dashboard onOpenVision={() => setShowVisionEngine(true)} />;
+      {/* Modals & Drawers rendered at root for persistence */}
+      <ChatDrawer
+        visible={chatVisible}
+        onClose={() => setChatVisible(false)}
+        messages={messages}
+        setMessages={setMessages}
+        hasFiredInitial={hasFiredInitial}
+        setHasFiredInitial={setHasFiredInitial}
+      />
+    </View>
+  );
 }
 
 export default function App() {

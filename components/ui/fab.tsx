@@ -4,7 +4,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "../../lib/utils";
 
 const fabVariants = cva(
-  "absolute bottom-8 right-8 h-16 w-16 items-center justify-center rounded-full shadow-2xl active:scale-95",
+  "absolute bottom-8 right-8 h-16 w-16 items-center justify-center rounded-full shadow-2xl",
   {
     variants: {
       variant: {

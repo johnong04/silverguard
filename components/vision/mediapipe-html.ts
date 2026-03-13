@@ -34,6 +34,8 @@ export const MEDIAPIPE_HTML = `
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta http-equiv="Content-Security-Policy" content="default-src * 'unsafe-inline' 'unsafe-eval' data: blob:; media-src *;">
   <title>SilverGuard Vision Engine</title>
+  <!-- ElevenLabs SDK for Voice AI -->
+  <script src="https://elevenlabs.io/convai-sdk/v1/sdk.js"></script>
   <style>
     * {
       margin: 0;
@@ -147,6 +149,11 @@ export const MEDIAPIPE_HTML = `
     const JADE_GREEN_LIGHT = 'rgba(16, 185, 129, 0.6)';
     const AMBER = '#F59E0B';
 
+    // ElevenLabs State
+    let conversation = null;
+    const ELEVEN_API_KEY = "sk_77664683afdb3ee4c6555b7062356be01bb3f6d577ac8711"; // MANUAL TASK: Replace this
+    const ELEVEN_AGENT_ID = "agent_7801kcz0tvx2fxavd3wbgrzm0smn";
+
     // Fall detection state
     let previousCentroid = null;
     let previousTime = null;
@@ -190,6 +197,60 @@ export const MEDIAPIPE_HTML = `
         console.log('RN Bridge:', type, data);
       }
     }
+
+    async function startVoiceAI() {
+      if (conversation) return;
+      
+      try {
+        updateStatus('🎙️ Connecting to Auntie...');
+        conversation = await window.ElevenLabs.Conversation.startSession({
+          apiKey: ELEVEN_API_KEY,
+          agentId: ELEVEN_AGENT_ID,
+          onConnect: () => {
+            updateStatus('🎙️ Voice Active');
+            sendToReactNative('VOICE_START');
+          },
+          onDisconnect: () => {
+            updateStatus('Guard Mode Active');
+            conversation = null;
+            sendToReactNative('VOICE_END');
+          },
+          onMessage: (msg) => {
+            if (msg.source === 'ai' || msg.source === 'user') {
+              sendToReactNative('TRANSCRIPTION', { text: msg.message });
+            }
+          },
+          onError: (err) => {
+            console.error('Voice AI Error:', err);
+            updateStatus('Voice AI Error');
+          }
+        });
+      } catch (err) {
+        console.error('Failed to start ElevenLabs:', err);
+        updateStatus('Voice AI Failed');
+      }
+    }
+
+    function stopVoiceAI() {
+      if (conversation) {
+        conversation.endSession();
+        conversation = null;
+      }
+    }
+
+    // Listen for messages from React Native
+    window.addEventListener('message', (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.type === 'START_VOICE') {
+          startVoiceAI();
+        } else if (data.type === 'STOP_VOICE') {
+          stopVoiceAI();
+        }
+      } catch (err) {
+        console.error('Failed to parse RN message:', err);
+      }
+    });
 
     function average(...points) {
       const validPoints = points.filter(p => p && p.visibility > 0.5);
@@ -255,9 +316,14 @@ export const MEDIAPIPE_HTML = `
         confidence: 0.95
       });
 
+      // Automatically start Voice AI on fall detection
+      startVoiceAI();
+
       setTimeout(() => {
         fallCooldown = false;
-        updateStatus('Guard Mode Active');
+        if (!conversation) {
+          updateStatus('Guard Mode Active');
+        }
       }, FALL_COOLDOWN_MS);
     }
 
@@ -384,7 +450,7 @@ export const MEDIAPIPE_HTML = `
             width: { ideal: 640 },
             height: { ideal: 480 }
           },
-          audio: false
+          audio: false // Disabled here to avoid Camera conflict; ElevenLabs SDK will request Mic when session starts
         });
 
         video.srcObject = stream;

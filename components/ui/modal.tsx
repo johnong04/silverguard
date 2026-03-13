@@ -30,7 +30,7 @@ export function Modal({ visible, onClose, title, children, className }: ModalPro
             <Text className="text-xl font-serif text-white">{title}</Text>
             <Pressable 
               onPress={onClose}
-              className="h-8 w-8 items-center justify-center rounded-full bg-white/5 active:bg-white/10"
+              className="h-8 w-8 items-center justify-center rounded-full bg-white/5"
             >
               <X size={20} color="white" />
             </Pressable>

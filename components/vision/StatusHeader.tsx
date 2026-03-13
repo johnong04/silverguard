@@ -57,7 +57,7 @@ export function StatusHeader({ onBack, isActive = true }: StatusHeaderProps) {
         {/* Back button */}
         <Pressable
           onPress={onBack}
-          className="h-10 w-10 items-center justify-center rounded-full bg-white/10 active:bg-white/20"
+          className="h-10 w-10 items-center justify-center rounded-full bg-white/10"
         >
           <ArrowLeft size={20} color="#FAFAF9" />
         </Pressable>

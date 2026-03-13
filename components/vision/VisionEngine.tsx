@@ -70,6 +70,9 @@ export function VisionEngine({ onClose, userId }: VisionEngineProps) {
         setIsSpeaking(false);
         setTranscription("");
         
+        // STOP Voice AI session in WebView
+        webViewRef.current?.postMessage(JSON.stringify({ type: "STOP_VOICE" }));
+
         // Reset status and log resolution in Convex
         await logResolution({ userId });
         return;
@@ -85,6 +88,9 @@ export function VisionEngine({ onClose, userId }: VisionEngineProps) {
         true
       );
 
+      // START Voice AI session in WebView
+      webViewRef.current?.postMessage(JSON.stringify({ type: "START_VOICE" }));
+
       // Log to Convex
       await logFall({
         userId,
@@ -95,10 +101,6 @@ export function VisionEngine({ onClose, userId }: VisionEngineProps) {
         },
       });
 
-      // Show transcription (simulating voice response)
-      setTranscription(
-        "Auntie, okay tak? I detected a fall. Help is on the way!"
-      );
       setIsSpeaking(true);
     },
     [isFallActive, logFall, logResolution, strobeOpacity, userId]
@@ -137,6 +139,21 @@ export function VisionEngine({ onClose, userId }: VisionEngineProps) {
               reason: data.reason,
               confidence: data.confidence,
             });
+            break;
+
+          case "TRANSCRIPTION":
+            if (data.text) {
+              setTranscription(data.text);
+            }
+            break;
+
+          case "VOICE_START":
+            setIsSpeaking(true);
+            break;
+
+          case "VOICE_END":
+            setIsSpeaking(false);
+            setTranscription("");
             break;
 
           case "ERROR":
@@ -248,13 +265,15 @@ export function VisionEngine({ onClose, userId }: VisionEngineProps) {
 
       {/* Fall Alert Indicator */}
       {isFallActive && (
-        <Animated.View
-          entering={FadeIn.duration(200)}
-          exiting={FadeOut.duration(200)}
-          style={[styles.fallAlert, strobeStyle]}
-        >
-          <View className="absolute inset-0 bg-destructive/20 border-4 border-destructive" />
-        </Animated.View>
+        <View style={StyleSheet.absoluteFillObject} pointerEvents="none">
+          <Animated.View
+            entering={FadeIn.duration(200)}
+            exiting={FadeOut.duration(200)}
+            style={[styles.fallAlert, strobeStyle]}
+          >
+            <View className="absolute inset-0 bg-destructive/20 border-4 border-destructive" />
+          </Animated.View>
+        </View>
       )}
 
       {/* Emergency Button */}

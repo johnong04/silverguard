@@ -23,7 +23,7 @@ if (
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
-interface Message {
+export interface Message {
   id: string;
   text: string;
   sender: "user" | "ai";
@@ -33,13 +33,22 @@ interface Message {
 interface ChatDrawerProps {
   visible: boolean;
   onClose: () => void;
+  messages: Message[];
+  setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
+  hasFiredInitial: boolean;
+  setHasFiredInitial: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-export function ChatDrawer({ visible, onClose }: ChatDrawerProps) {
-  const [messages, setMessages] = useState<Message[]>([]);
+export function ChatDrawer({
+  visible,
+  onClose,
+  messages,
+  setMessages,
+  hasFiredInitial,
+  setHasFiredInitial,
+}: ChatDrawerProps) {
   const [inputText, setInputText] = useState("");
   const [isThinking, setIsThinking] = useState(false);
-  const [hasFiredInitial, setHasFiredInitial] = useState(false);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
   const scrollViewRef = useRef<ScrollView>(null);
 
