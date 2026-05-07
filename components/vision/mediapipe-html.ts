@@ -268,8 +268,8 @@ export const MEDIAPIPE_HTML = `
     }
 
     function checkFall(landmarks) {
-      if (fallCooldown) return;
-      
+      if (fallCooldown) return null;
+
       const leftShoulder = landmarks[11];
       const rightShoulder = landmarks[12];
       const leftHip = landmarks[23];
@@ -281,17 +281,17 @@ export const MEDIAPIPE_HTML = `
       const shoulders = average(leftShoulder, rightShoulder);
       const hips = average(leftHip, rightHip);
       const ankles = average(leftAnkle, rightAnkle);
-      
-      if (!shoulders || !hips || !nose || !ankles) return;
+
+      if (!shoulders || !hips || !nose || !ankles) return null;
 
       const centroid = average(shoulders, hips);
-      if (!centroid) return;
+      if (!centroid) return null;
 
       const now = Date.now();
 
       if (nose.y > ankles.y + 0.1 && nose.visibility > 0.7 && ankles.visibility > 0.5) {
         triggerFall('nose_below_ankles');
-        return;
+        return null;
       }
 
       if (previousCentroid && previousTime) {
@@ -300,12 +300,13 @@ export const MEDIAPIPE_HTML = `
 
         if (deltaY > 0.30 && deltaTime < 400 && deltaTime > 50) {
           triggerFall('rapid_drop');
-          return;
+          return null;
         }
       }
 
       previousCentroid = { ...centroid };
       previousTime = now;
+      return centroid.y;
     }
 
     function triggerFall(reason) {
@@ -346,6 +347,31 @@ export const MEDIAPIPE_HTML = `
         ctx.moveTo(0, y); ctx.lineTo(w, y);
       }
       ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawReadout(landmarks, centroidY) {
+      ctx.save();
+      // Counter-mirror so text is readable (canvas is scaleX(-1) at parent level)
+      ctx.translate(canvas.width, 0);
+      ctx.scale(-1, 1);
+
+      ctx.font = '11px ui-monospace, "SF Mono", "Roboto Mono", monospace';
+      ctx.fillStyle = READOUT_TEXT;
+      ctx.textBaseline = 'top';
+
+      const visibleCount = landmarks.filter(l => l && l.visibility > 0.5).length;
+      const lines = [
+        'TRACKING ACTIVE',
+        'POINTS  ' + visibleCount + '/33',
+        'CENTROID Y  ' + (centroidY != null ? centroidY.toFixed(3) : '----'),
+        'COOLDOWN  ' + (fallCooldown ? 'LOCKED' : 'OPEN'),
+      ];
+      let yy = 16;
+      for (const line of lines) {
+        ctx.fillText(line, 16, yy);
+        yy += 14;
+      }
       ctx.restore();
     }
 
@@ -414,7 +440,8 @@ export const MEDIAPIPE_HTML = `
         if (results.landmarks && results.landmarks.length > 0) {
           const landmarks = results.landmarks[0];
           drawSkeleton(landmarks);
-          checkFall(landmarks);
+          const centroidY = checkFall(landmarks);
+          drawReadout(landmarks, centroidY);
           
           if (!fallCooldown) {
             updateStatus('Guard Mode Active');
