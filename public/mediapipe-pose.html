@@ -115,10 +115,14 @@
     const statusEl = document.getElementById('status');
     const errorEl = document.getElementById('error');
 
-    // Colors matching the Warm Ember theme
-    const JADE_GREEN = '#10B981';
-    const JADE_GREEN_LIGHT = 'rgba(16, 185, 129, 0.6)';
-    const AMBER = '#F59E0B';
+    // Skeleton aesthetic — TouchDesigner-style technical readout
+    const NODE_RED = '#FF2A4A';            // primary landmark dot
+    const NODE_RED_GLOW = 'rgba(255, 42, 74, 0.45)';
+    const LINE_GREEN = '#00FF94';          // neon connector line
+    const LINE_GREEN_GLOW = 'rgba(0, 255, 148, 0.35)';
+    const GRID_LINE = 'rgba(0, 255, 148, 0.06)'; // faint backdrop grid
+    const READOUT_TEXT = '#00FF94';
+    const AMBER = '#F59E0B';               // kept for status/error compatibility
 
     // ElevenLabs State
     let conversation = null;
@@ -298,19 +302,41 @@
       }, FALL_COOLDOWN_MS);
     }
 
+    function drawGrid() {
+      const w = canvas.width;
+      const h = canvas.height;
+      const step = 40;
+      ctx.save();
+      ctx.strokeStyle = GRID_LINE;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      for (let x = 0; x <= w; x += step) {
+        ctx.moveTo(x, 0); ctx.lineTo(x, h);
+      }
+      for (let y = 0; y <= h; y += step) {
+        ctx.moveTo(0, y); ctx.lineTo(w, y);
+      }
+      ctx.stroke();
+      ctx.restore();
+    }
+
     function drawSkeleton(landmarks) {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawGrid();
 
       if (!landmarks || landmarks.length === 0) return;
 
-      ctx.strokeStyle = JADE_GREEN;
-      ctx.lineWidth = 4;
+      // Pass 1 — connectors with green glow
+      ctx.save();
+      ctx.shadowColor = LINE_GREEN_GLOW;
+      ctx.shadowBlur = 8;
+      ctx.strokeStyle = LINE_GREEN;
+      ctx.lineWidth = 1.5;
       ctx.lineCap = 'round';
 
       for (const [startIdx, endIdx] of POSE_CONNECTIONS) {
         const start = landmarks[startIdx];
         const end = landmarks[endIdx];
-
         if (start && end && start.visibility > 0.5 && end.visibility > 0.5) {
           ctx.beginPath();
           ctx.moveTo(start.x * canvas.width, start.y * canvas.height);
@@ -318,23 +344,26 @@
           ctx.stroke();
         }
       }
+      ctx.restore();
 
+      // Pass 2 — red landmark dots with halo
       for (let i = 0; i < landmarks.length; i++) {
-        const landmark = landmarks[i];
-        if (landmark && landmark.visibility > 0.5) {
-          const x = landmark.x * canvas.width;
-          const y = landmark.y * canvas.height;
+        const lm = landmarks[i];
+        if (!lm || lm.visibility <= 0.5) continue;
+        const x = lm.x * canvas.width;
+        const y = lm.y * canvas.height;
 
-          ctx.beginPath();
-          ctx.arc(x, y, 8, 0, 2 * Math.PI);
-          ctx.fillStyle = JADE_GREEN_LIGHT;
-          ctx.fill();
+        // Outer halo
+        ctx.beginPath();
+        ctx.arc(x, y, 9, 0, 2 * Math.PI);
+        ctx.fillStyle = NODE_RED_GLOW;
+        ctx.fill();
 
-          ctx.beginPath();
-          ctx.arc(x, y, 4, 0, 2 * Math.PI);
-          ctx.fillStyle = JADE_GREEN;
-          ctx.fill();
-        }
+        // Solid red core
+        ctx.beginPath();
+        ctx.arc(x, y, 3.5, 0, 2 * Math.PI);
+        ctx.fillStyle = NODE_RED;
+        ctx.fill();
       }
     }
 
