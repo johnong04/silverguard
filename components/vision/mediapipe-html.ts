@@ -164,10 +164,10 @@ export const MEDIAPIPE_HTML = `
     let fallCooldown = false;
     const FALL_COOLDOWN_MS = 5000;
 
-    // Torso-horizontal sustained state
+    // Torso-horizontal sustained state — DEMO-TUNED for easier triggering
     let horizontalSince = null;       // timestamp when torso first went horizontal
-    const HORIZONTAL_SUSTAIN_MS = 700; // must stay horizontal this long to fire
-    const HORIZONTAL_RATIO = 1.2;      // |dx| > 1.2 * |dy|  ->  torso more horizontal than vertical
+    const HORIZONTAL_SUSTAIN_MS = 400; // must stay horizontal this long to fire (was 700)
+    const HORIZONTAL_RATIO = 0.9;      // |dx| > 0.9 * |dy|  ->  ~45° tilt fires (was 1.2)
 
     // MediaPipe instance
     let poseLandmarker = null;
@@ -294,7 +294,8 @@ export const MEDIAPIPE_HTML = `
 
       const now = Date.now();
 
-      if (nose.y > ankles.y + 0.1 && nose.visibility > 0.7 && ankles.visibility > 0.5) {
+      // DEMO-TUNED: nose at or below ankle level fires (was nose.y > ankles.y + 0.1)
+      if (nose.y > ankles.y && nose.visibility > 0.6 && ankles.visibility > 0.4) {
         triggerFall('nose_below_ankles');
         return null;
       }
@@ -322,7 +323,8 @@ export const MEDIAPIPE_HTML = `
         const deltaY = centroid.y - previousCentroid.y;
         const deltaTime = now - previousTime;
 
-        if (deltaY > 0.30 && deltaTime < 400 && deltaTime > 50) {
+        // DEMO-TUNED: 20% centroid drop fires (was 0.30)
+        if (deltaY > 0.20 && deltaTime < 500 && deltaTime > 50) {
           triggerFall('rapid_drop');
           return null;
         }
