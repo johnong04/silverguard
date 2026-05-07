@@ -164,6 +164,11 @@ export const MEDIAPIPE_HTML = `
     let fallCooldown = false;
     const FALL_COOLDOWN_MS = 5000;
 
+    // Torso-horizontal sustained state
+    let horizontalSince = null;       // timestamp when torso first went horizontal
+    const HORIZONTAL_SUSTAIN_MS = 700; // must stay horizontal this long to fire
+    const HORIZONTAL_RATIO = 1.2;      // |dx| > 1.2 * |dy|  ->  torso more horizontal than vertical
+
     // MediaPipe instance
     let poseLandmarker = null;
     let lastDetectionTime = 0;
@@ -292,6 +297,25 @@ export const MEDIAPIPE_HTML = `
       if (nose.y > ankles.y + 0.1 && nose.visibility > 0.7 && ankles.visibility > 0.5) {
         triggerFall('nose_below_ankles');
         return null;
+      }
+
+      // Heuristic 3: torso orientation — fires if torso has been horizontal >700ms
+      const dxTorso = Math.abs(shoulders.x - hips.x);
+      const dyTorso = Math.abs(shoulders.y - hips.y);
+      const torsoHorizontal =
+        shoulders.visibility > 0.6 &&
+        hips.visibility > 0.6 &&
+        dxTorso > HORIZONTAL_RATIO * dyTorso;
+
+      if (torsoHorizontal) {
+        if (horizontalSince === null) horizontalSince = now;
+        if (now - horizontalSince > HORIZONTAL_SUSTAIN_MS) {
+          triggerFall('torso_horizontal');
+          horizontalSince = null;
+          return null;
+        }
+      } else {
+        horizontalSince = null;
       }
 
       if (previousCentroid && previousTime) {
