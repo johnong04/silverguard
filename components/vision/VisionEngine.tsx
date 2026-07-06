@@ -5,6 +5,8 @@ import {
   Platform,
   Text,
   ActivityIndicator,
+  Pressable,
+  GestureResponderEvent,
 } from "react-native";
 import { WebView, WebViewMessageEvent } from "react-native-webview";
 import Animated, {
@@ -25,6 +27,7 @@ import { MEDIAPIPE_HTML, MEDIAPIPE_HOSTED_URL } from "./mediapipe-html";
 import { StatusHeader } from "./StatusHeader";
 import { TranscriptionOverlay } from "./TranscriptionOverlay";
 import { EmergencyButton } from "./EmergencyButton";
+import { PillScanOverlay } from "./PillScanOverlay";
 
 // Use hosted URL on Android (WebView doesn't support getUserMedia for local HTML)
 const USE_HOSTED_MEDIAPIPE = Platform.OS === "android";
@@ -52,10 +55,19 @@ export function VisionEngine({ onClose, userId }: VisionEngineProps) {
   );
   const [permissionError, setPermissionError] = useState<string | null>(null);
 
+  // Pill scan state
+  const [pillScan, setPillScan] = useState<{
+    visible: boolean;
+    x: number;
+    y: number;
+  }>({ visible: false, x: 0, y: 0 });
+
   // Convex hooks
   const user = useQuery(api.users.getById, { userId });
   const logFall = useMutation(api.events.logFall);
   const logResolution = useMutation(api.events.logResolution);
+  const meds = useQuery(api.meds.getByUser, { userId });
+  const toggleTaken = useMutation(api.meds.toggleTaken);
 
   const isFallActive = user?.status === "fall_detected";
 
@@ -172,6 +184,28 @@ export function VisionEngine({ onClose, userId }: VisionEngineProps) {
     await triggerFallResponse("manual_simulation");
   }, [triggerFallResponse]);
 
+  const handleCameraTap = useCallback(
+    (e: GestureResponderEvent) => {
+      // Don't trigger pill scan during a fall — emergency takes priority
+      if (isFallActive || pillScan.visible) return;
+      const { locationX, locationY } = e.nativeEvent;
+      setPillScan({ visible: true, x: locationX, y: locationY });
+    },
+    [isFallActive, pillScan.visible]
+  );
+
+  const handlePillIngested = useCallback(() => {
+    // Mark the next untaken med as taken
+    const nextUntaken = meds?.find((m) => !m.taken);
+    if (nextUntaken) {
+      toggleTaken({ medId: nextUntaken._id, taken: true });
+    }
+  }, [meds, toggleTaken]);
+
+  const handlePillScanComplete = useCallback(() => {
+    setPillScan({ visible: false, x: 0, y: 0 });
+  }, []);
+
   const strobeStyle = useAnimatedStyle(() => ({
     opacity: strobeOpacity.value,
   }));
@@ -253,6 +287,22 @@ export function VisionEngine({ onClose, userId }: VisionEngineProps) {
         }}
       />
 
+      {/* Tap-to-scan layer (sits above WebView, below status header) */}
+      <Pressable
+        onPress={handleCameraTap}
+        style={styles.tapLayer}
+        android_disableSound={true}
+      />
+
+      {/* Pill Scan Overlay (TouchDesigner-style bbox + scan) */}
+      <PillScanOverlay
+        visible={pillScan.visible}
+        x={pillScan.x}
+        y={pillScan.y}
+        onIngested={handlePillIngested}
+        onComplete={handlePillScanComplete}
+      />
+
       {/* Top Layer: React Native Overlay UI */}
       <StatusHeader onBack={onClose} isActive={isReady} />
 
@@ -293,6 +343,10 @@ const styles = StyleSheet.create({
   webview: {
     flex: 1,
     backgroundColor: "transparent",
+  },
+  tapLayer: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 10,
   },
   fallAlert: {
     ...StyleSheet.absoluteFillObject,
